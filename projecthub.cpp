@@ -49,6 +49,19 @@ void ProjectHub::launchSelectedProject()
     project->launch();
 }
 
+void ProjectHub::filterProjects(const QString &text)
+{
+    for (int i = 0; i < m_projectListWidget->count(); ++i) {
+        QListWidgetItem *item = m_projectListWidget->item(i);
+        int index = item->data(Qt::UserRole).value<int>();
+
+        Project& project = m_projects[index];
+
+        item->setHidden(!project.title.contains(text, Qt::CaseInsensitive));
+    }
+
+}
+
 Project *ProjectHub::selectedProject()
 {
     if(m_selectedProjectIndex < 0 || m_selectedProjectIndex >= m_projects.count())
@@ -69,6 +82,7 @@ void ProjectHub::setupUI()
 
     auto projectSearchLineEdit = new QLineEdit();
     projectSearchLineEdit->setPlaceholderText("Search...");
+    connect(projectSearchLineEdit, &QLineEdit::textChanged, this, &ProjectHub::filterProjects);
     projectsLayout->addWidget(projectSearchLineEdit);
     projectsLayout->addWidget(m_projectListWidget);
 

@@ -39,6 +39,8 @@ signals:
 private slots:
     void onProjectSelected();
     void launchSelectedProject();
+
+    void filterProjects(const QString& text);
 private:
     Project *selectedProject();;
     void setupUI();
