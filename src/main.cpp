@@ -1,11 +1,12 @@
-#include "projecthub.h"
+#include "project_hub/projecthub.h"
+
+#include "chess/chess.h"
 
 #include <QApplication>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QSlider>
 #include <QListView>
-
 
 int main(int argc, char *argv[])
 {
@@ -47,10 +48,8 @@ int main(int argc, char *argv[])
             .shortDescription = "A networked multiplayer chess game.",
             .description = "A networked multiplayer chess game.",
             .launch = []() {
-                auto *window = new QWidget();
-                window->setWindowTitle("Chess Game");
-                window->setFixedSize(800, 450);
-                window->show();
+                auto *chessWindow = new Chess::MainWindow();
+                chessWindow->show();
             },
         },
     };

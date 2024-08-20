@@ -28,9 +28,18 @@ struct Project
     std::function<void()> launch;
 };
 
+class ProjectListTile : public QWidget
+{
+    Q_OBJECT
+
+public:
+    explicit ProjectListTile(const Project& project, QWidget *parent = nullptr);
+};
+
 class ProjectHub : public QMainWindow
 {
     Q_OBJECT
+
 public:
     explicit ProjectHub(QVector<Project> projects, QWidget *parent = nullptr);
 

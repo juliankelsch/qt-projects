@@ -85,50 +85,17 @@ void ProjectHub::setupUI()
     connect(projectSearchLineEdit, &QLineEdit::textChanged, this, &ProjectHub::filterProjects);
     projectsLayout->addWidget(projectSearchLineEdit);
     projectsLayout->addWidget(m_projectListWidget);
+    
+    for (size_t i = 0; i < m_projects.count(); ++i) {
 
-    int projectIndex = 0;
-    for (const Project& project : m_projects)
-    {
         auto projectItem = new QListWidgetItem(m_projectListWidget);
-        projectItem->setData(Qt::UserRole, QVariant::fromValue(projectIndex));
+        projectItem->setData(Qt::UserRole, QVariant::fromValue(i));
 
-        auto projectWidget = new QWidget();
-        auto projectLayoutOuter = new QHBoxLayout(projectWidget);
+        auto projectListTile = new ProjectListTile(m_projects[i]);
 
-        auto projectIcon = new QLabel(project.type == ProjectType::Qml ? "QML" : "Widgets");
+        projectItem->setSizeHint(projectListTile->sizeHint());
 
-        projectIcon->setStyleSheet("color: green");
-
-        QFont projectIconFont;
-        projectIconFont.setBold(true);
-        projectIconFont.setPointSize(project.type == ProjectType::Qml ? 14 : 9);
-
-        projectIcon->setFont(projectIconFont);
-        projectLayoutOuter->addWidget(projectIcon, 2, Qt::AlignCenter);
-
-        auto projectLayout = new QVBoxLayout();
-        projectLayoutOuter->addLayout(projectLayout, 8);
-
-        projectLayout->setAlignment(Qt::AlignLeft | Qt::AlignTop);
-
-        QFont titleFont;
-        titleFont.setBold(true);
-        titleFont.setPointSize(12);
-        auto projectTitleLabel = new QLabel(project.title);
-        projectTitleLabel->setFont(titleFont);
-        projectLayout->addWidget(projectTitleLabel);
-
-        QFont subtitleFont;
-        subtitleFont.setItalic(true);
-        auto projectSubtitleLabel = new QLabel(project.shortDescription);
-        projectSubtitleLabel->setFont(subtitleFont);
-        projectLayout->addWidget(projectSubtitleLabel);
-
-        projectItem->setSizeHint(projectWidget->sizeHint());
-
-        m_projectListWidget->setItemWidget(projectItem, projectWidget);
-
-        projectIndex++;
+        m_projectListWidget->setItemWidget(projectItem, projectListTile);
     }
 
     // Details
@@ -139,21 +106,9 @@ void ProjectHub::setupUI()
     QFont titleFont;
     titleFont.setBold(true);
     titleFont.setPointSize(14);
-    m_titleLabel = new QLabel("Title");
+    m_titleLabel = new QLabel("");
     m_titleLabel->setFont(titleFont);
-    auto descriptionText =
-        "Multiline lorem ipsum text Multiline lorem ipsum text Multiline lorem ipsum text Multiline lorem ipsum\n"
-        "Multiline lorem ipsum text Multiline lorem ipsum text Multiline lorem ipsum text Multiline lorem ipsum\n"
-        "Multiline lorem ipsum text Multiline lorem ipsum text Multiline lorem ipsum text Multiline lorem ipsum\n"
-        "\n"
-        "Multiline lorem ipsum text Multiline lorem ipsum text Multiline lorem ipsum text Multiline lorem ipsum\n"
-        "Multiline lorem ipsum text Multiline lorem ipsum text Multiline lorem ipsum text Multiline lorem ipsum\n"
-        "Multiline lorem ipsum text Multiline lorem ipsum text Multiline lorem ipsum text Multiline lorem ipsum\n"
-        "Multiline lorem ipsum text Multiline lorem ipsum text Multiline lorem ipsum text Multiline lorem ipsum\n"
-        "Multiline lorem ipsum text Multiline lorem ipsum text Multiline lorem ipsum text Multiline lorem ipsum\n"
-        "Multiline lorem ipsum text Multiline lorem ipsum text Multiline lorem ipsum text Multiline lorem ipsum\n"
-        ;
-    m_descriptionLabel = new QLabel(descriptionText);
+    m_descriptionLabel = new QLabel("");
     QFont descriptionFont;
     descriptionFont.setPointSize(10);
     m_descriptionLabel->setFont(descriptionFont);
@@ -185,4 +140,39 @@ void ProjectHub::setupUI()
     centralLayout->addWidget(detailsWidget, 7);
 
     setCentralWidget(centralWidget);
+}
+
+ProjectListTile::ProjectListTile(const Project &project, QWidget *parent)
+    : QWidget(parent)
+{
+    auto outerLayout = new QHBoxLayout(this);
+
+    auto icon = new QLabel(project.type == ProjectType::Qml ? "QML" : "Widgets");
+
+    icon->setStyleSheet("color: green");
+
+    QFont iconFont;
+    iconFont.setBold(true);
+    iconFont.setPointSize(project.type == ProjectType::Qml ? 14 : 9);
+
+    icon->setFont(iconFont);
+    outerLayout->addWidget(icon, 2, Qt::AlignCenter);
+
+    auto innerLayout = new QVBoxLayout();
+    outerLayout->addLayout(innerLayout, 8);
+
+    innerLayout->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+
+    QFont titleFont;
+    titleFont.setBold(true);
+    titleFont.setPointSize(12);
+    auto projectTitleLabel = new QLabel(project.title);
+    projectTitleLabel->setFont(titleFont);
+    innerLayout->addWidget(projectTitleLabel);
+
+    QFont subtitleFont;
+    subtitleFont.setItalic(true);
+    auto projectSubtitleLabel = new QLabel(project.shortDescription);
+    projectSubtitleLabel->setFont(subtitleFont);
+    innerLayout->addWidget(projectSubtitleLabel);
 }

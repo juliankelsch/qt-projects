@@ -9,18 +9,31 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Test)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Test)
+
+#set(SOURCE_DIR "src")
+
+#file(GLOB PROJECT_SOURCES
+#    "*.cpp"
+#    "*.h"
+#    $"{SOURCE_DIR}/*.cpp"
+#    $"{SOURCE_DIR}/*.h"
+#)
+
+#list(APPEND PROJECT_SOURCES resources.qrc)
 
 set(PROJECT_SOURCES
-        main.cpp
-        widget.cpp
-        widget.h
-        projecthub.cpp
-        projecthub.h
+        src/main.cpp
+        src/project_hub/projecthub.cpp
+        src/project_hub/projecthub.h
+        src/chess/chess.h
+        src/chess/chess.cpp
+        resources.qrc
 )
 
-qt_add_resources(RESOURCES resources.qrc)
+
+#qt_add_resources(RESOURCES resources.qrc)
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(learn-widgets
@@ -64,3 +77,19 @@ install(TARGETS learn-widgets
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(learn-widgets)
 endif()
+
+# Test integration
+#set(TEST_SOURCES
+#    chess.h
+#    chess.cpp
+#    # Add more test files as needed
+#)
+
+#add_executable(learn-widgets-tests ${TEST_SOURCES})
+
+#target_link_libraries(learn-widgets-tests PRIVATE Qt${QT_VERSION_MAJOR}::Test Qt${QT_VERSION_MAJOR}::Widgets)
+
+#enable_testing()
+
+#add_test(NAME LearnWidgetsTests COMMAND learn-widgets-tests)
+
