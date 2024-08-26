@@ -232,6 +232,8 @@ public:
     Position currentPosition() const;
 
     Position headPosition() const;
+
+    void clear();
 private:
     size_t m_nextMoveIndex = 0;
     QVector<Move> m_moves;
@@ -344,7 +346,10 @@ public:
 
     MatchSettings getMatchSettings();
 
-    static const std::map<QString, PlayerType>& playerTypes();
+    std::optional<PlayerType> getPlayerTypeByName(QString name);
+    std::optional<QString> getPlayerTypeName(PlayerType playerType);
+
+    static const std::vector<std::pair<QString, PlayerType>>& playerTypes();
 private:
 
     QComboBox* createPlayerComboBox();

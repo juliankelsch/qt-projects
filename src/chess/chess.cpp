@@ -24,6 +24,8 @@
 #include <QComboBox>
 #include <QFormLayout>
 
+#include <QTimer>
+
 using namespace Chess;
 
 Board Board::standardSetup()
@@ -225,11 +227,6 @@ void MainWindow::onSquareClicked(QPoint pos)
     }
 
     selectAndPlayHumanMove(*m_selectedPos, pos);
-
-    if(!isHumansTurn() && !isGameOver())
-    {
-        doAiMove();
-    }
 }
 
 void MainWindow::onNewAction()
@@ -245,7 +242,24 @@ void MainWindow::onNewAction()
 
 void MainWindow::startNewGame(const MatchSettings &settings)
 {
-    qDebug("Starting new game!\n");
+    m_matchSettings = settings;
+
+    m_currentPosition = Position();
+
+    m_boardView->clearHighlights();
+    m_boardView->clearMoveIndicators();
+    m_boardView->setBoard(&m_currentPosition.board());
+
+    Color startingPlayer = m_currentPosition.currentPlayer();
+    m_boardView->setViewForPlayer(startingPlayer);
+
+    m_history.clear();
+    m_historyView->setHistory(&m_history);
+
+    if(!isHumansTurn())
+    {
+        doAiMove();
+    }
 }
 
 void MainWindow::selectPieceAt(QPoint pos)
@@ -282,17 +296,20 @@ void MainWindow::playMove(Move move)
 
     showCheckIndicator();
 
-    if(isHumansTurn())
-    {
-        Color currentPlayer = m_currentPosition.currentPlayer();
-        m_boardView->setViewForPlayer(currentPlayer);
-    }
-
     if(isGameOver())
     {
         showGameResult();
+        return;
     }
 
+    if(!isHumansTurn())
+    {
+        doAiMove();
+        return;
+    }
+
+    Color currentPlayer = m_currentPosition.currentPlayer();
+    m_boardView->setViewForPlayer(currentPlayer);
 }
 
 std::optional<Move> MainWindow::trySelectMove(QPoint from, QPoint to)
@@ -333,14 +350,14 @@ std::optional<Move> MainWindow::trySelectMove(QPoint from, QPoint to)
 }
 
 
-void MainWindow::selectAndPlayHumanMove(QPoint from, QPoint to)
+void MainWindow::selectAndPlayHumanMove(QPoint firstClick, QPoint secondClick)
 {
     m_selectedPos.reset();
 
-    std::optional<Move> move = trySelectMove(from, to);
+    std::optional<Move> move = trySelectMove(firstClick, secondClick);
     if(!move)
     {
-        selectPieceAt(to);
+        selectPieceAt(secondClick);
         return;
     }
 
@@ -462,8 +479,11 @@ void MainWindow::doAiMove()
     break;
     case PlayerType::EasyBot:
     {
-        Move move = calculateMove_EasyAI(m_currentPosition);
-        playMove(move);
+        QTimer::singleShot(1, this, [this]() {
+            Move move = calculateMove_EasyAI(m_currentPosition);
+            playMove(move);
+        });
+
     }
     break;
     }
@@ -1512,6 +1532,12 @@ Position MoveHistory::headPosition() const
     return position;
 }
 
+void MoveHistory::clear()
+{
+    m_moves.clear();
+    m_nextMoveIndex = 0;
+}
+
 MoveHistoryView::MoveHistoryView(QWidget *parent)
     : QWidget(parent)
 {
@@ -1664,16 +1690,29 @@ NewGameDialog::NewGameDialog(QWidget *parent)
     formLayout->addRow("Black:", black);
 
     connect(white, &QComboBox::currentTextChanged, this, [this](const QString& text) {
-        m_matchSettings.white = playerTypes().at(text);
+        m_matchSettings.white = *getPlayerTypeByName(text);
     });
 
     connect(black, &QComboBox::currentTextChanged, this, [this](const QString& text) {
-        m_matchSettings.black = playerTypes().at(text);
+        m_matchSettings.black = *getPlayerTypeByName(text);
     });
+
+
+    std::optional<QString> defaultWhite = getPlayerTypeName(m_matchSettings.white);
+    if(defaultWhite)
+    {
+        white->setCurrentText(*defaultWhite);
+    }
+
+    std::optional<QString> defaultBlack = getPlayerTypeName(m_matchSettings.white);
+    if(defaultBlack)
+    {
+        black->setCurrentText(*defaultBlack);
+    }
 
     auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttonBox, &QDialogButtonBox::accepted, this, &NewGameDialog::accept);
-    connect(buttonBox, &QDialogButtonBox::rejected, this, &NewGameDialog::accept);
+    connect(buttonBox, &QDialogButtonBox::rejected, this, &NewGameDialog::rejected);
 
     auto layout = new QVBoxLayout();
     layout->addLayout(formLayout);
@@ -1687,9 +1726,39 @@ MatchSettings NewGameDialog::getMatchSettings()
     return m_matchSettings;
 }
 
-const std::map<QString, PlayerType> &NewGameDialog::playerTypes()
+std::optional<PlayerType> NewGameDialog::getPlayerTypeByName(QString name)
 {
-    static std::map<QString, PlayerType> s_playerTypes({
+    const auto players = playerTypes();
+    auto entry = std::find_if(std::begin(players), std::end(players), [name] (const auto& entry){
+        return entry.first == name;
+    });
+
+    if(entry != std::end(players))
+    {
+        return entry->second;
+    }
+
+    return std::nullopt;
+}
+
+std::optional<QString> NewGameDialog::getPlayerTypeName(PlayerType playerType)
+{
+    const auto players = playerTypes();
+    auto entry = std::find_if(std::begin(players), std::end(players), [playerType] (const auto& entry){
+        return entry.second == playerType;
+    });
+
+    if(entry != std::end(players))
+    {
+        return entry->first;
+    }
+
+    return std::nullopt;
+}
+
+const std::vector<std::pair<QString, PlayerType>> &NewGameDialog::playerTypes()
+{
+    static std::vector<std::pair<QString, PlayerType>> s_playerTypes({
         {"Human", PlayerType::Human},
         {"Easy Bot", PlayerType::EasyBot},
     });
